@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>toexe - find out if a Mac app can become a Windows .exe</title>
+  <meta name="description" content="toexe is a terminal tool for macOS. Run it in a folder of .app bundles and it tells you straight away whether each app can be converted. Electron apps are repackaged into a Windows .exe. Swift, Qt, Flutter and most other native apps are refused. Simple Java/JAR apps get a Windows wrapper.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12110d" media="(prefers-color-scheme: dark)">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="toexe - find out if a Mac app can become a Windows .exe">
+  <meta property="og:description" content="A terminal tool that inspects macOS .app bundles and tells you honestly what can and can't be converted. Most apps can't, and toexe says so immediately.">
+  <meta property="og:url" content="https://tommfr38.github.io/toexe/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="toexe - find out if a Mac app can become a Windows .exe">
+  <meta name="twitter:description" content="Honest .app to .exe checker for the terminal. Refuses what can't be converted instead of producing a broken file.">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2312110d'/%3E%3Cpath d='M8 10l7 6-7 6' fill='none' stroke='%23ff9a5c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='17' y='20' width='8' height='3' rx='1.5' fill='%23f1ede2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!--
+    Notes for editing:
+    - The curl one-liner appears in the hero, "How it works" step 1 and the FAQ (search "raw.githubusercontent.com").
+    - The terminal demo uses made-up app names, but its messages were matched to the real CLI (v0.1.0).
+    - TODO: add an og:image social card.
+  -->
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap bar">
+      <a class="brand" href="#top" aria-label="toexe, back to top">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect width="32" height="32" rx="7" class="bm-bg"/>
+          <path d="M8 10l7 6-7 6" fill="none" class="bm-chev" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="17" y="20" width="8" height="3" rx="1.5" class="bm-bar"/>
+        </svg>
+        <span>toexe</span>
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav">
+          <li><a href="#demo">Demo</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#support">What converts</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="https://github.com/tommfr38/toexe" class="nav-gh">GitHub</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span> macOS available now &middot; Linux coming soon</p>
+          <h1 id="hero-title">Most Mac apps can't become a <span class="hl">.exe</span>. toexe tells you in a second.</h1>
+          <p class="lede">
+            toexe is a terminal tool. Run <code>toexe</code> in a folder that contains <code>.app</code> bundles.
+            It finds them, detects what each one is built on, and tries to convert it.
+            Electron apps are repackaged into a real Windows <code>.exe</code> folder.
+            Apps built on Swift, Qt, Flutter and similar frameworks are refused right away.
+            Simple Java/JAR-based apps can be wrapped for Windows.
+          </p>
+
+          <div class="install" role="group" aria-label="Install command">
+            <span class="prompt" aria-hidden="true">$</span>
+            <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/tommfr38/toexe/main/install.sh | sh</code>
+            <button type="button" class="copy" id="copy-btn" data-target="install-cmd">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+          <p class="sr-only" id="copy-status" role="status" aria-live="polite"></p>
+
+          <p class="fineprint">
+            Then <code>cd</code> to a folder of apps and run <code>toexe</code>.
+            Works on Intel and Apple Silicon Macs, because it only inspects the bundle.
+            <a href="#support">See exactly what can and can't convert.</a>
+          </p>
+        </div>
+
+        <figure class="hero-art">
+          <svg viewBox="0 0 480 320" role="img" aria-labelledby="art-title art-desc">
+            <title id="art-title">toexe sorts each .app into a Windows build, a Java wrapper or a refusal</title>
+            <desc id="art-desc">A .app bundle enters a toexe inspection step. An Electron app is repackaged with the Windows Electron runtime, and a simple Java or JAR app is wrapped for Windows and needs a Windows JRE. Everything else, such as Swift apps, is refused with a message.</desc>
+
+            <!-- source bundle -->
+            <g transform="translate(10 112)">
+              <rect class="a-card" x="0" y="0" width="92" height="96" rx="12"/>
+              <rect class="a-line" x="14" y="18" width="46" height="7" rx="3.5"/>
+              <rect class="a-line" x="14" y="34" width="64" height="7" rx="3.5"/>
+              <rect class="a-line" x="14" y="50" width="38" height="7" rx="3.5"/>
+              <text class="a-ext" x="46" y="82" text-anchor="middle">.app</text>
+            </g>
+
+            <!-- inspect node -->
+            <path class="a-flow" d="M104 160 H150"/>
+            <g transform="translate(150 134)">
+              <rect class="a-pill" x="0" y="0" width="84" height="52" rx="10"/>
+              <text class="a-pill-t" x="42" y="22" text-anchor="middle">toexe</text>
+              <text class="a-pill-s" x="42" y="38" text-anchor="middle">inspect</text>
+            </g>
+
+            <!-- branch lines -->
+            <path class="a-flow" d="M234 160 H262 Q276 160 276 146 V86 Q276 72 290 72 H300"/>
+            <path class="a-flow" d="M234 160 H262 Q276 160 276 174 V234 Q276 248 290 248 H300"/>
+
+            <!-- rare outcome: wrapper -->
+            <g transform="translate(300 34)">
+              <rect class="a-out a-out-ok" x="0" y="0" width="172" height="76" rx="10"/>
+              <text class="a-out-h a-t-ok" x="14" y="26">Electron or Java</text>
+              <text class="a-out-t" x="14" y="46">Electron: Windows .exe</text>
+              <text class="a-out-t" x="14" y="62">Java: wrapper, needs JRE</text>
+            </g>
+
+            <!-- common outcome: refused -->
+            <g transform="translate(300 188)">
+              <rect class="a-out a-out-no" x="0" y="0" width="172" height="120" rx="10"/>
+              <text class="a-out-h a-t-no" x="14" y="26">Everything else</text>
+              <text class="a-out-t" x="14" y="46">Swift, Qt,</text>
+              <text class="a-out-t" x="14" y="62">SwiftUI, Flutter,</text>
+              <text class="a-out-t" x="14" y="78">Tauri, Unity, CEF...</text>
+              <text class="a-out-m" x="14" y="104">cannot become exe</text>
+            </g>
+            <text class="a-cap" x="386" y="22" text-anchor="middle">possible</text>
+            <text class="a-cap" x="386" y="180" text-anchor="middle">most apps</text>
+          </svg>
+        </figure>
+      </div>
+    </section>
+
+    <!-- HONESTY BAND -->
+    <section class="band" aria-labelledby="band-title">
+      <div class="wrap band-in">
+        <h2 id="band-title" class="band-h">Read this first</h2>
+        <p>
+          A native macOS app is compiled for macOS and calls Apple-only frameworks.
+          No tool can generically turn that into a Windows program, and toexe doesn't pretend to.
+          It refuses those apps immediately, so you get a clear answer instead of a broken file.
+          What it can do is repackage <strong>Electron</strong> apps (their code is JavaScript, so it runs on the Windows build of Electron)
+          and wrap simple <strong>Java</strong> apps. Even then, test the result on Windows: toexe cannot run it for you.
+        </p>
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section class="section" id="demo" aria-labelledby="demo-title">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="sec-no" aria-hidden="true">01</p>
+          <div>
+            <h2 id="demo-title">What it actually looks like</h2>
+            <p class="sec-sub">With several apps in a folder, toexe shows a numbered list and asks which one. Here is an Electron app converted, a Swift app refused, then a Java app wrapped.</p>
+          </div>
+        </header>
+
+        <div class="term" id="term">
+          <div class="term-top">
+            <span class="tl" aria-hidden="true"></span><span class="tl" aria-hidden="true"></span><span class="tl" aria-hidden="true"></span>
+            <span class="term-title">~/Downloads &mdash; zsh</span>
+            <button type="button" class="replay" id="replay" hidden>Replay</button>
+          </div>
+<pre class="term-body" id="term-body" aria-label="Example terminal session, illustrative"><span class="ln"><span class="c-ps">~/Downloads $</span> <span class="c-cmd">toexe</span></span>
+<span class="ln">Found <b>4</b> apps in ~/Downloads:</span>
+<span class="ln">  <span class="c-num">1)</span> JarPeek.app</span>
+<span class="ln">  <span class="c-num">2)</span> Markr.app</span>
+<span class="ln">  <span class="c-num">3)</span> Notely.app</span>
+<span class="ln">  <span class="c-num">4)</span> Sketchbox.app</span>
+<span class="ln"><span class="c-q">Which to convert?</span> <span class="c-dim">[number, 1,3, 2-4, all, q]</span> <span class="c-cmd">3,4</span></span>
+<span class="ln">Notely.app</span>
+<span class="ln">  Detected: Electron <span class="c-dim">(repackaged with the official Windows Electron runtime)</span></span>
+<span class="ln">  <span class="c-ok">Created a Windows app</span> <span class="c-dim">(Electron 33.2.1, win32-x64)</span></span>
+<span class="ln">    Notely.exe  <span class="c-dim">(the Windows Electron runtime running this app's code)</span></span>
+<span class="ln">  <span class="c-warn">Not run on Windows by toexe. Test the result on a Windows machine.</span></span>
+<span class="ln">&nbsp;</span>
+<span class="ln">Sketchbox.app</span>
+<span class="ln">  <span class="c-bad">Swift based apps cannot become exe</span></span>
+<span class="ln">  <span class="c-dim">Why: Swift apps are compiled to native macOS machine code against Apple frameworks. Nothing can be repackaged.</span></span>
+<span class="ln">&nbsp;</span>
+<span class="ln">1 converted, 1 refused</span>
+<span class="ln">&nbsp;</span>
+<span class="ln"><span class="c-ps">~/Downloads $</span> <span class="c-cmd">toexe JarPeek.app</span></span>
+<span class="ln">JarPeek.app</span>
+<span class="ln">  <span class="c-ok">Created a Java WRAPPER</span> <span class="c-dim">(NOT a native .exe)</span></span>
+<span class="ln">  <span class="c-warn">Requires a Windows Java runtime (JRE) on PATH.</span></span>
+<span class="ln">&nbsp;</span>
+<span class="ln">1 converted, 0 refused</span></pre>
+          <p class="term-note">Example session with made-up app names. The messages follow the real CLI output; the Swift &quot;Why&quot; line is shortened.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section alt" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="sec-no" aria-hidden="true">02</p>
+          <div>
+            <h2 id="how-title">How it works</h2>
+            <p class="sec-sub">Three steps. No GUI, no account.</p>
+          </div>
+        </header>
+
+        <ol class="steps">
+          <li class="step">
+            <span class="step-n" aria-hidden="true">1</span>
+            <h3>Install</h3>
+            <p>Run the one-line installer in your terminal. It needs macOS and Node 18 or newer.</p>
+            <code class="step-code">curl -fsSL https://raw.githubusercontent.com/tommfr38/toexe/main/install.sh | sh</code>
+          </li>
+          <li class="step">
+            <span class="step-n" aria-hidden="true">2</span>
+            <h3>Run it where your apps are</h3>
+            <p>In any folder with <code>.app</code> bundles, type <code>toexe</code>. It finds them and, if there are several, shows a numbered list and asks which one.</p>
+            <code class="step-code">cd ~/Downloads &amp;&amp; toexe</code>
+          </li>
+          <li class="step">
+            <span class="step-n" aria-hidden="true">3</span>
+            <h3>Get a verdict</h3>
+            <p>toexe inspects the bundle to see what the app is built on. If that is a framework it can't handle, it stops and says so. An Electron app gets a Windows folder with a real .exe, and a simple Java/JAR app gets a Windows wrapper.</p>
+            <code class="step-code">Swift based apps cannot become exe</code>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- WHAT CONVERTS -->
+    <section class="section" id="support" aria-labelledby="support-title">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="sec-no" aria-hidden="true">03</p>
+          <div>
+            <h2 id="support-title">What can and can't convert</h2>
+            <p class="sec-sub">toexe doesn't translate Mac code. It identifies the framework and either refuses, repackages an Electron app with the Windows Electron runtime, or, for simple Java apps, wraps the JAR.</p>
+          </div>
+        </header>
+
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Framework results table (scrolls horizontally on small screens)">
+          <table>
+            <caption class="sr-only">App framework and what toexe does with it</caption>
+            <thead>
+              <tr><th scope="col">App is built on</th><th scope="col">Result</th><th scope="col">What you see</th></tr>
+            </thead>
+            <tbody>
+              <tr class="row-ok">
+                <th scope="row">Simple Java / JAR</th>
+                <td><span class="badge ok">Wrapped</span></td>
+                <td>A Windows wrapper around the JAR. Not a native exe: the Windows machine needs a Java runtime (JRE).</td>
+              </tr>
+              <tr class="row-ok">
+                <th scope="row">Electron</th>
+                <td><span class="badge ok">Converted</span></td>
+                <td>A folder with a real <code>.exe</code>: the official Windows Electron runtime (downloaded and checksum-verified) running your app's code. Refused with <code>Electron apps with native macOS modules cannot become exe</code> if the app has <code>.node</code> modules, or <code>Electron based apps cannot become exe</code> if its version can't be read.</td>
+              </tr>
+              <tr>
+                <th scope="row">Swift</th>
+                <td><span class="badge no">Refused</span></td>
+                <td><code>Swift based apps cannot become exe</code></td>
+              </tr>
+              <tr>
+                <th scope="row">Objective-C / AppKit</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">SwiftUI</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">Qt</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">Flutter</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">Tauri</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">Unity</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">CEF (Chromium Embedded)</th>
+                <td><span class="badge no">Refused</span></td>
+                <td>Refused with the same kind of message.</td>
+              </tr>
+              <tr>
+                <th scope="row">Plain C++ or anything unrecognized</th>
+                <td><span class="badge no">Refused</span></td>
+                <td><code>Unrecognized app type: toexe could not identify a convertible runtime.</code> Compiled native code can't be translated, so nothing is produced.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ul class="caveats">
+          <li><strong>Refusing is the feature.</strong> If an app can't be converted, toexe says so immediately instead of producing a file that won't run.</li>
+          <li><strong>Electron results are untested on Windows.</strong> toexe cannot run the output. No icon is embedded in the .exe, and apps that use macOS-only Electron APIs may behave differently.</li>
+          <li><strong>A Java wrapper is not an exe.</strong> The Java/JAR result depends on a Java runtime being installed on the Windows machine. Test it there.</li>
+          <li><strong>Your rights.</strong> Only work with apps you have the right to modify or redistribute, such as your own or open-source ones.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PLATFORMS -->
+    <section class="section alt" id="platforms" aria-labelledby="plat-title">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="sec-no" aria-hidden="true">04</p>
+          <div>
+            <h2 id="plat-title">Platforms</h2>
+            <p class="sec-sub">Where you can run toexe today.</p>
+          </div>
+        </header>
+
+        <div class="plat-grid">
+          <article class="plat">
+            <div class="plat-head">
+              <h3>macOS</h3>
+              <span class="badge ok">Available</span>
+            </div>
+            <p>Runs on Intel and Apple Silicon Macs, since it only inspects the <code>.app</code> bundle.</p>
+          </article>
+          <article class="plat plat-soon" aria-describedby="linux-note">
+            <div class="plat-head">
+              <h3>Linux</h3>
+              <span class="badge soon" aria-disabled="true">Coming soon</span>
+            </div>
+            <p id="linux-note">Not available yet, and there is no date. This website collects no data: no sign-up, no analytics, no cookies.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="wrap narrow">
+        <header class="sec-head">
+          <p class="sec-no" aria-hidden="true">05</p>
+          <div>
+            <h2 id="faq-title">FAQ</h2>
+          </div>
+        </header>
+
+        <div class="faq">
+          <details>
+            <summary>Why can't it convert every app?</summary>
+            <p>A native Mac app is machine code compiled for macOS that talks to Apple's own frameworks, and frameworks such as Qt, Flutter, Tauri and Unity ship macOS-specific binaries too. Windows has none of those pieces, so there is no generic translation. Any tool claiming to convert any Mac app to a Windows exe is overselling. toexe checks what the app is built on and refuses what it can't honestly handle.</p>
+          </details>
+          <details>
+            <summary>Does it work on Apple Silicon?</summary>
+            <p>Yes. It works on both Intel and Apple Silicon Macs because it only inspects the app bundle and doesn't run the app.</p>
+          </details>
+          <details>
+            <summary>Does it convert Electron apps?</summary>
+            <p>Yes, with limits. An Electron app is a copy of the Electron runtime plus your app's JavaScript. toexe downloads the official Windows build of the same Electron version from GitHub, verifies its checksum, and puts the app's code into it. You get a folder with <code>&lt;App&gt;.exe</code> that is a real Windows executable. Apps with native Node modules (<code>.node</code> files built for macOS) are refused, and toexe can't test the result on Windows, so check it there. Use <code>--arch</code> to pick x64, arm64 or ia32.</p>
+          </details>
+          <details>
+            <summary>What does it do with a Java app, and do I need Java?</summary>
+            <p>For a simple Java/JAR-based app it creates a Windows wrapper around the JAR. That is not a native exe, so the Windows machine needs a Java runtime (JRE) installed to run it. Complex apps that merely use Java alongside other components may still be refused.</p>
+          </details>
+          <details>
+            <summary>My app was refused. What now?</summary>
+            <p>Look for an official Windows version from the developer. If the app is open source, it can often be built for Windows from its source code. toexe can't help with either, but it will have saved you from a broken file.</p>
+          </details>
+          <details>
+            <summary>How do I install it?</summary>
+            <p>Run <code>curl -fsSL https://raw.githubusercontent.com/tommfr38/toexe/main/install.sh | sh</code>. It downloads the latest release from GitHub, checks its checksum, installs to <code>~/.toexe</code> and adds a <code>toexe</code> command in <code>~/.local/bin</code>. No sudo needed. Then run <code>toexe</code> in a folder with your apps.</p>
+          </details>
+          <details>
+            <summary>When is Linux support coming?</summary>
+            <p>It is planned, but there is no date. macOS is the only available platform today.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap foot">
+      <div>
+        <a class="brand" href="#top" aria-label="Back to top">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <rect width="32" height="32" rx="7" class="bm-bg"/>
+            <path d="M8 10l7 6-7 6" fill="none" class="bm-chev" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="17" y="20" width="8" height="3" rx="1.5" class="bm-bar"/>
+          </svg>
+          <span>toexe</span>
+        </a>
+        <p class="foot-note">Inspects macOS apps and tells you honestly whether they can become Windows executables. Not affiliated with Apple, Microsoft, Oracle or the Electron project. This site collects no data.</p>
+      </div>
+      <ul class="foot-links">
+        <li><a href="https://github.com/tommfr38/toexe">GitHub</a></li>
+        <li><a href="https://github.com/tommfr38/toexe/issues">Issues</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

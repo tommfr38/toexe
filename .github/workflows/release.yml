@@ -1,0 +1,41 @@
+name: Release
+
+# Runs only when a version tag such as v0.1.0 is pushed.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # needed to create the GitHub Release and upload assets
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run CLI tests
+        working-directory: cli
+        run: npm test
+
+      - name: Build release artifacts
+        # Fails if the tag does not match the version in cli/package.json.
+        run: sh scripts/build-release.sh "${GITHUB_REF_NAME}"
+
+      - name: Show what was built
+        run: |
+          tar -tzf dist/toexe.tar.gz
+          cat dist/toexe.tar.gz.sha256
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/toexe.tar.gz
+            dist/toexe.tar.gz.sha256
+          generate_release_notes: true

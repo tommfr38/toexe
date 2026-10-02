@@ -1,0 +1,26 @@
+{
+  "name": "toexe",
+  "version": "0.1.0",
+  "description": "Inspect macOS .app bundles and tell you, honestly, whether they can become a Windows exe",
+  "bin": {
+    "toexe": "bin/toexe.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "macos",
+    "app",
+    "windows",
+    "exe",
+    "converter"
+  ]
+}
