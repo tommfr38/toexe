@@ -1,11 +1,11 @@
 #!/bin/sh
 # Builds the release artifacts for toexe:
 #
-#   dist/toexe.tar.gz          package.json, bin/, src/, README.md from cli/
+#   dist/toexe.tar.gz          package.json, bin/, src/, README.md from cli/, plus LICENSE
 #   dist/toexe.tar.gz.sha256   "<sha256>  toexe.tar.gz"
 #
 # The tarball has no wrapper directory: extracting it into an empty folder gives
-#   package.json  bin/toexe.js  src/*.js  README.md
+#   package.json  bin/toexe.js  src/*.js  README.md  LICENSE
 # which is exactly what install.sh unpacks into ~/.toexe.
 #
 # Usage: scripts/build-release.sh [vX.Y.Z]
@@ -29,7 +29,8 @@ fi
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/toexe-build.XXXXXX")"
 trap 'rm -rf "$STAGE"' EXIT INT TERM HUP
 
-cp "$CLI/package.json" "$CLI/README.md" "$STAGE/"
+[ -f "$ROOT/LICENSE" ] || { echo "build-release: $ROOT/LICENSE not found" >&2; exit 1; }
+cp "$CLI/package.json" "$CLI/README.md" "$ROOT/LICENSE" "$STAGE/"
 cp -R "$CLI/bin" "$CLI/src" "$STAGE/"
 find "$STAGE" \( -name '.DS_Store' -o -name '._*' -o -name 'node_modules' \) -prune -exec rm -rf {} +
 chmod -R u+rwX,go+rX,go-w "$STAGE"
@@ -38,7 +39,7 @@ chmod +x "$STAGE/bin/toexe.js"
 rm -rf "$DIST"
 mkdir -p "$DIST"
 # COPYFILE_DISABLE stops macOS tar from adding AppleDouble (._*) entries.
-COPYFILE_DISABLE=1 tar -czf "$DIST/toexe.tar.gz" -C "$STAGE" package.json README.md bin src
+COPYFILE_DISABLE=1 tar -czf "$DIST/toexe.tar.gz" -C "$STAGE" package.json README.md LICENSE bin src
 
 (
   cd "$DIST"
