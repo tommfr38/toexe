@@ -264,6 +264,7 @@ summary:focus-visible { outline-offset: -2px; }
 /* footer */
 .site-footer { border-top: 1px solid var(--line); padding: 38px 0 48px; }
 .foot { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+.foot-untested { margin: 14px 0 0; max-width: 52ch; padding-left: 12px; border-left: 3px solid var(--warn, currentColor); color: var(--ink); font-size: .9rem; }
 .foot-note { margin: 12px 0 0; max-width: 52ch; color: var(--muted); font-size: .9rem; }
 .foot-links { list-style: none; margin: 0; padding: 0; display: flex; gap: 20px; align-items: flex-start; }
 .foot-links a { color: var(--muted); }

@@ -24,3 +24,11 @@ See [INSTALL.md](INSTALL.md). Then run `toexe` in a folder that contains `.app` 
 | `install.sh`, `uninstall.sh`, `scripts/` | curl installer and release build |
 | `website/` | the static site |
 | `test-apps/` | tiny C++, Swift, Java and Electron `.app`s for testing (`./test.sh`) |
+
+## Status
+
+Untested on Windows: toexe cannot run the Windows output it creates, so test converted apps on a Windows machine.
+
+## License
+
+[MIT](LICENSE)
