@@ -6,7 +6,7 @@ A terminal tool for macOS that checks whether a `.app` can become a Windows prog
 - Simple Java/JAR apps get a Windows wrapper (needs a Java runtime on Windows).
 - Everything else (Swift, Qt, Flutter, Tauri, ...) is refused with a message like `Swift based apps cannot become exe`.
 
-Site: https://tommfr38.github.io/toexe/
+Site: https://tommfr38.com/toexe/
 
 ## Install
 
